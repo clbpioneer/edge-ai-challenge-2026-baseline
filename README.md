@@ -108,13 +108,12 @@ Stream camera: `GET http://<ip>:81/stream` (MJPEG).
 |---|---|---|
 | Chuẩn bị | `gdown` tải dataset, giải nén vào `egde-ai-challenge-2026-lan-2-qualifiers/`, cài thư viện | |
 | 1. Detection | Thống kê class, dataloader grid 15×20, model CNN, train (mAP@50, F1), export int8 qua onnx2tf, chạy thử và vẽ box | `model_int8.tflite`, `det_model.cc/.h` |
-| 2. Intent | Tách từ + vocab, TextCNN, train, export int8 **qua Keras** (không qua onnx2tf), in danh sách op, so độ chính xác float và INT8 | `textcnn_int8.tflite`, `textcnn_model.cc/.h` |
+| 2. Intent | Tách từ + vocab, TextCNN, train, export int8 **qua Keras** (không qua onnx2tf), in danh sách op, so độ chính xác float và INT8 | `textcnn_int8.tflite`, `textcnn_model.cc/.h`, `vocab.cc/.h` |
 
 Copy các file `.cc/.h` vào `main/models/` (hoặc đặt `cc_dir` trong ô export), rồi chạy `idf.py build flash`.
 
-`main/models/vocab.cc/.h` (261 từ) đã có sẵn trong repo. Notebook không sinh lại file này: train lại trên cùng dataset
-thì vocab không đổi (seed cố định). Nếu đổi dữ liệu hoặc cách tách từ, cần xuất lại `vocab.cc` theo thứ tự id
-(`vocab[k]` có id `k+2`; 0 = pad, 1 = từ lạ).
+Ô cuối của phần 2 xuất `vocab.cc/.h` (`vocab[k]` có id `k+2`; 0 = pad, 1 = từ lạ). Đổi dữ liệu hoặc cách tách từ thì
+phải copy cả `vocab.cc/.h` mới cùng với `textcnn_model.cc/.h`, nếu không token id trên ESP sẽ lệch với model.
 
 Ràng buộc để chạy được trên ESP (chi tiết trong `main/models/README.md`):
 - Detection: input int8 `1×240×320×3` (RGB/255), output NHWC `1×15×20×(5+7)`.

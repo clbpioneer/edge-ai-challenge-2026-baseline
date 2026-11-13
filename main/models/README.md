@@ -4,8 +4,7 @@ Repo đã kèm trọng số baseline. Thay model của đội: cần đủ 3 c�
 
 `baseline.ipynb` tự sinh ra ở 2 ô export (int8), copy vào đây rồi `idf.py build flash`:
 - Phần 1 Detection → `model_int8.tflite` + `det_model.cc/.h`
-- Phần 2 TextCNN → `textcnn_int8.tflite` + `textcnn_model.cc/.h`
-- `vocab.cc/.h` có sẵn trong repo (cùng dataset, seed cố định thì vocab không đổi)
+- Phần 2 TextCNN → `textcnn_int8.tflite` + `textcnn_model.cc/.h` + `vocab.cc/.h` (luôn copy cùng nhau)
 
 (Đặt `cc_dir` trong ô export để ghi thẳng vào thư mục này.)
 
