@@ -1,7 +1,11 @@
-# ESP32-S3 Edge AI baseline: Detection + Intent
+# Edge AI Challenge 2026: Baseline ESP32-S3 (Detection + Intent)
 
-Baseline chạy **hoàn toàn trên ESP32-S3**: phát hiện đồ vật (CNN int8) và phân loại ý định câu hỏi (TextCNN int8)
-bằng TFLite Micro, kèm web server để thử trực tiếp từ trình duyệt.
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/clbpioneer/edge-ai-challenge-2026-baseline/blob/main/baseline.ipynb)
+[![ESP-IDF](https://img.shields.io/badge/ESP--IDF-%E2%89%A55.1-blue)](https://docs.espressif.com/projects/esp-idf/en/stable/esp32s3/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
+
+Baseline cho các đội thi: phát hiện đồ vật (CNN int8) và phân loại ý định câu hỏi (TextCNN int8)
+chạy **hoàn toàn trên ESP32-S3** bằng TFLite Micro, kèm web server để thử trực tiếp từ trình duyệt.
 
 ![Giao diện web chạy trên ESP32-S3](assets/web_demo.png)
 
@@ -24,6 +28,16 @@ Trình duyệt ◄──────────── JSON ──────�
 - Camera OV7670 là tùy chọn: có thì web hiện khung camera live và nút chụp ảnh. Camera **chưa** nối vào model,
   phần này để các đội tự phát triển (xem [Camera](#camera-ov7670-tùy-chọn)).
 
+## Mục lục
+- [Phần cứng](#phần-cứng)
+- [Build và flash](#build-và-flash)
+- [Dùng web](#dùng-web)
+- [API (cho script chấm hoặc test tự động)](#api-cho-script-chấm-hoặc-test-tự-động)
+- [Train và thay model của đội](#train-và-thay-model-của-đội)
+- [Cấu trúc](#cấu-trúc)
+- [Camera OV7670 (tùy chọn)](#camera-ov7670-tùy-chọn)
+- [Lỗi thường gặp](#lỗi-thường-gặp)
+
 ## Phần cứng
 
 - **ESP32-S3 có PSRAM** (bắt buộc: tensor arena detection khoảng 1.5 MB). Đã cấu hình cho module **N16R8 / N8R8 (PSRAM Octal)**.
@@ -37,7 +51,8 @@ Cần [ESP-IDF](https://docs.espressif.com/projects/esp-idf/en/stable/esp32s3/ge
 Các component `esp-tflite-micro`, `esp-nn`, `esp32-camera` được tự tải khi build.
 
 ```bash
-git clone <repo-url> && cd <repo>
+git clone https://github.com/clbpioneer/edge-ai-challenge-2026-baseline.git
+cd edge-ai-challenge-2026-baseline
 . $IDF_PATH/export.sh
 idf.py set-target esp32s3
 idf.py menuconfig          # ESP32-S3 Infer → WiFi SSID / password
@@ -88,7 +103,7 @@ Stream camera: `GET http://<ip>:81/stream` (MJPEG).
 
 ## Train và thay model của đội
 
-`baseline.ipynb` chạy trên Google Colab (GPU T4), từ trên xuống:
+`baseline.ipynb` chạy trên Google Colab (GPU T4), từ trên xuống. [Mở trong Colab](https://colab.research.google.com/github/clbpioneer/edge-ai-challenge-2026-baseline/blob/main/baseline.ipynb).
 
 | Phần | Nội dung | Sinh ra |
 |---|---|---|
@@ -169,6 +184,10 @@ chạy trên ảnh test. Các đội muốn dùng camera nên cân nhắc thu th
 | `khong cap phat duoc ... KB PSRAM` | Board không có PSRAM hoặc PSRAM Quad (xem [Phần cứng](#phần-cứng)) |
 | `detection: can input int8 1x240x320x3 ...` | Model detection sai shape hoặc sai số class |
 | `Thieu main/models/... ` khi build | Chưa copy đủ các file `.cc/.h` vào `main/models/` |
+
+## Đóng góp và hỏi đáp
+
+Gặp lỗi hoặc có câu hỏi về baseline: mở [Issue](https://github.com/clbpioneer/edge-ai-challenge-2026-baseline/issues) kèm log `idf.py monitor`, phiên bản ESP-IDF và loại board.
 
 ## License
 
