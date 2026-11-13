@@ -123,7 +123,7 @@ Ràng buộc để chạy được trên ESP (chi tiết trong `main/models/READ
 - Chỉ dùng op mà TFLite Micro hỗ trợ và đã đăng ký trong `REGISTER_OPS` (`main/model_config.h`).
   Thiếu op thì log báo `Didn't find op for builtin opcode ...`: thêm op vào `REGISTER_OPS`.
 
-> ⚠️ **Đừng export TextCNN qua onnx2tf.** onnx2tf chèn `SELECT`/`CAST int64` khi gặp embedding (TFLite Micro không có),
+> **Đừng export TextCNN qua onnx2tf.** onnx2tf chèn `SELECT`/`CAST int64` khi gặp embedding (TFLite Micro không có),
 > và nối sai trục khi độ dài câu = số chiều embedding (= 32). TFLite trên PC vẫn chạy đúng nên rất khó phát hiện.
 > Ô export trong notebook dựng lại model bằng Keras rồi chép trọng số từ PyTorch.
 
@@ -202,14 +202,5 @@ chạy trên ảnh test. Các đội muốn dùng camera nên cân nhắc thu th
 | Log | Cách xử lý |
 |---|---|
 | `AllocateTensors loi` + `Didn't find op ...` | Thêm op vào `REGISTER_OPS` (`main/model_config.h`) |
-| `khong cap phat duoc ... KB PSRAM` | Board không có PSRAM hoặc PSRAM Quad (xem [Phần cứng](#phần-cứng)) |
 | `detection: can input int8 1x240x320x3 ...` | Model detection sai shape hoặc sai số class |
 | `Thieu main/models/... ` khi build | Chưa copy đủ các file `.cc/.h` vào `main/models/` |
-
-## Đóng góp và hỏi đáp
-
-Gặp lỗi hoặc có câu hỏi về baseline: mở [Issue](https://github.com/clbpioneer/edge-ai-challenge-2026-baseline/issues) kèm log `idf.py monitor`, phiên bản ESP-IDF và loại board.
-
-## License
-
-[MIT](LICENSE)
