@@ -53,7 +53,6 @@ Các component `esp-tflite-micro`, `esp-nn`, `esp32-camera` được tự tải 
 ```bash
 git clone https://github.com/clbpioneer/edge-ai-challenge-2026-baseline.git
 cd edge-ai-challenge-2026-baseline
-. $IDF_PATH/export.sh
 idf.py set-target esp32s3
 idf.py menuconfig          # ESP32-S3 Infer → WiFi SSID / password
 idf.py -p /dev/ttyACM0 flash monitor     # Windows: -p COMx
