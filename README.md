@@ -150,13 +150,32 @@ gcc -I main test/test_logic.c main/logic.c -lm -o /tmp/t && /tmp/t
 
 ## Camera OV7670 (tùy chọn)
 
-| OV7670 | ESP32-S3 | | OV7670 | ESP32-S3 |
-|---|---|---|---|---|
-| SDA | GPIO16 | | D0..D7 | GPIO4..11 |
-| SCL | GPIO17 | | RST | 3.3V |
-| XCLK | GPIO12 | | PWDN | GND |
-| PCLK | GPIO13 | | 3.3V / GND | 3V3 / GND |
-| HREF | GPIO15 | | VSYNC | GPIO14 |
+### Sơ đồ nối chân
+
+| OV7670 | ESP32-S3 | Ghi chú |
+|--------|----------|---------|
+| 3.3V   | 3V3      | |
+| GND    | GND      | |
+| SDA    | GPIO16   | SCCB data |
+| SCL    | GPIO17   | SCCB clock |
+| XCLK   | GPIO12   | ESP32-S3 cấp clock cho camera |
+| PCLK   | GPIO13   | |
+| HREF   | GPIO15   | |
+| VSYNC  | GPIO14   | |
+| D0     | GPIO4    | |
+| D1     | GPIO5    | |
+| D2     | GPIO6    | |
+| D3     | GPIO7    | |
+| D4     | GPIO8    | |
+| D5     | GPIO9    | |
+| D6     | GPIO10   | |
+| D7     | GPIO11   | |
+| RST    | 3.3V     | nối cứng, không dùng GPIO |
+| PWDN   | GND      | nối cứng, không dùng GPIO |
+
+Các chân này không trùng với chân PSRAM Octal (GPIO33–37) của module N16R8 / N8R8.
+
+### Ảnh mẫu từ camera
 
 Ảnh chụp thật bằng nút **Chụp ảnh** trên web (OV7670, QVGA 320×240, chưa qua xử lý):
 
@@ -169,6 +188,8 @@ gcc -I main test/test_logic.c main/logic.c -lm -o /tmp/t && /tmp/t
 
 Ảnh OV7670 bị ám màu, nhiễu và chụp ở góc khác hẳn ảnh dataset, nên dùng camera để detect có thể kém hơn nhiều so với
 chạy trên ảnh test. Các đội muốn dùng camera nên cân nhắc thu thêm dữ liệu từ chính camera này.
+
+### Ghi chú
 
 - Đổi chân: sửa `CAM_PIN_*` trong `main/cam.c`. XCLK, CLKRC, chất lượng JPEG: chỉnh trong `menuconfig`.
 - Không có camera thì firmware vẫn chạy bình thường, web báo "Không có camera".
