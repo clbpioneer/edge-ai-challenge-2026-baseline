@@ -35,7 +35,7 @@ Trình duyệt ◄──────────── JSON ──────�
 - [API (cho script chấm hoặc test tự động)](#api-cho-script-chấm-hoặc-test-tự-động)
 - [Train và thay model của đội](#train-và-thay-model-của-đội)
 - [Cấu trúc](#cấu-trúc)
-- [Camera OV7670 (tùy chọn)](#camera-ov7670-tùy-chọn)
+- [Camera OV7670](#camera-ov7670-tùy-chọn)
 - [Lỗi thường gặp](#lỗi-thường-gặp)
 
 ## Phần cứng
