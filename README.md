@@ -3,6 +3,12 @@
 Baseline chạy **hoàn toàn trên ESP32-S3**: phát hiện đồ vật (CNN int8) và phân loại ý định câu hỏi (TextCNN int8)
 bằng TFLite Micro, kèm web server để thử trực tiếp từ trình duyệt.
 
+![Giao diện web chạy trên ESP32-S3](assets/web_demo.png)
+
+*Giao diện web do ESP32-S3 phát. **Ảnh gốc**: `img_0001.png` của dataset kèm câu hỏi "troi co mua khong".
+**Camera**: hình OV7670 live. **Kết quả**: 3 đối tượng (phone 0.58, book 0.45, book 0.43), intent `OUT_OF_SCOPE`
+nên câu trả lời là "Câu hỏi nằm ngoài phạm vi". Thời gian đo trên board: detect 1389 ms, intent 2 ms.*
+
 ```
 Trình duyệt ──(ảnh 320×240 RGB + câu hỏi)──► ESP32-S3 /run
                                               ├─ Detection CNN (grid 15×20, 7 class) → box + NMS
@@ -13,6 +19,7 @@ Trình duyệt ◄──────────── JSON ──────�
 
 - **Class:** `bottle cup phone book mouse box toy_car`
 - **Intent:** `COUNT EXIST LIST LOCATION OUT_OF_SCOPE`
+- **Tốc độ trên ESP32-S3 (240 MHz):** detection khoảng 1.4 s/ảnh, intent khoảng 2 ms/câu.
 - Repo đã kèm trọng số baseline trong `main/models/`, clone về là build và flash được ngay.
 - Camera OV7670 là tùy chọn: có thì web hiện khung camera live và nút chụp ảnh. Camera **chưa** nối vào model,
   phần này để các đội tự phát triển (xem [Camera](#camera-ov7670-tùy-chọn)).
@@ -49,7 +56,7 @@ infer: vocab 261 tu
 
 ## Dùng web
 
-Trang có 3 khung trên cùng một hàng:
+Trang có 3 khung trên cùng một hàng (ảnh ở đầu README):
 
 | Khung | Chức năng |
 |---|---|
@@ -64,9 +71,9 @@ Câu hỏi gõ có dấu hay không dấu đều được, trình duyệt tự b
 `POST /run`: body = **230400 byte RGB888** (320×240, theo hàng, R G B) **+ câu hỏi ASCII không dấu** (tối đa 512 byte, có thể rỗng).
 
 ```json
-{"ms_det": 812, "ms_intent": 3,
- "dets": [{"c": "cup", "s": 0.873, "b": [0.12, 0.30, 0.35, 0.71]}],
- "intent": "COUNT", "answer": "Có 1 cốc."}
+{"ms_det": 1389, "ms_intent": 2,
+ "dets": [{"c": "phone", "s": 0.579, "b": [0.42, 0.42, 0.58, 0.55]}],
+ "intent": "OUT_OF_SCOPE", "answer": "Câu hỏi nằm ngoài phạm vi."}
 ```
 `b` = `[x1, y1, x2, y2]` chuẩn hóa 0..1. Ví dụ Python:
 
@@ -81,11 +88,19 @@ Stream camera: `GET http://<ip>:81/stream` (MJPEG).
 
 ## Train và thay model của đội
 
-1. Chạy `baseline.ipynb` từ trên xuống (đặt dataset ở thư mục `egde-ai-challenge-2026-lan-2-qualifiers`):
-   - Phần 1 Detection: train, export int8 ra `model_int8.tflite` và `det_model.cc/.h`
-   - Phần 2 TextCNN: train, export int8 ra `textcnn_int8.tflite`, `textcnn_model.cc/.h` và `vocab.cc/.h`
-   - Phần 3 Submission: tạo `submission.csv`
-2. Copy 6 file `.cc/.h` vào `main/models/` (hoặc đặt `cc_dir` trong ô export), rồi chạy `idf.py build flash`.
+`baseline.ipynb` chạy trên Google Colab (GPU T4), từ trên xuống:
+
+| Phần | Nội dung | Sinh ra |
+|---|---|---|
+| Chuẩn bị | `gdown` tải dataset, giải nén vào `egde-ai-challenge-2026-lan-2-qualifiers/`, cài thư viện | |
+| 1. Detection | Thống kê class, dataloader grid 15×20, model CNN, train (mAP@50, F1), export int8 qua onnx2tf, chạy thử và vẽ box | `model_int8.tflite`, `det_model.cc/.h` |
+| 2. Intent | Tách từ + vocab, TextCNN, train, export int8 **qua Keras** (không qua onnx2tf), in danh sách op, so độ chính xác float và INT8 | `textcnn_int8.tflite`, `textcnn_model.cc/.h` |
+
+Copy các file `.cc/.h` vào `main/models/` (hoặc đặt `cc_dir` trong ô export), rồi chạy `idf.py build flash`.
+
+`main/models/vocab.cc/.h` (261 từ) đã có sẵn trong repo. Notebook không sinh lại file này: train lại trên cùng dataset
+thì vocab không đổi (seed cố định). Nếu đổi dữ liệu hoặc cách tách từ, cần xuất lại `vocab.cc` theo thứ tự id
+(`vocab[k]` có id `k+2`; 0 = pad, 1 = từ lạ).
 
 Ràng buộc để chạy được trên ESP (chi tiết trong `main/models/README.md`):
 - Detection: input int8 `1×240×320×3` (RGB/255), output NHWC `1×15×20×(5+7)`.
@@ -95,12 +110,12 @@ Ràng buộc để chạy được trên ESP (chi tiết trong `main/models/READ
 
 > ⚠️ **Đừng export TextCNN qua onnx2tf.** onnx2tf chèn `SELECT`/`CAST int64` khi gặp embedding (TFLite Micro không có),
 > và nối sai trục khi độ dài câu = số chiều embedding (= 32). TFLite trên PC vẫn chạy đúng nên rất khó phát hiện.
-> Ô export trong notebook dựng graph thẳng bằng TensorFlow và có `assert` kiểm tra danh sách op.
+> Ô export trong notebook dựng lại model bằng Keras rồi chép trọng số từ PyTorch.
 
 ## Cấu trúc
 
 ```
-baseline.ipynb          train + export int8 + .cc/.h + submission
+baseline.ipynb          train + export int8 + .cc/.h (Colab)
 main/
   main.c                WiFi, HTTP server (/ và /run)
   infer.cc/.h           TFLite Micro: nạp 2 model, chạy detect / intent
@@ -109,6 +124,7 @@ main/
   cam.c/.h              camera OV7670 + MJPEG stream cổng 81
   index.html            giao diện web (được nhúng vào firmware)
   models/               trọng số dạng mảng C (.cc/.h)
+assets/                 ảnh minh họa cho README
 test/test_logic.c       test hậu xử lý trên máy tính
 ```
 
@@ -127,6 +143,18 @@ gcc -I main test/test_logic.c main/logic.c -lm -o /tmp/t && /tmp/t
 | PCLK | GPIO13 | | 3.3V / GND | 3V3 / GND |
 | HREF | GPIO15 | | VSYNC | GPIO14 |
 
+Ảnh chụp thật bằng nút **Chụp ảnh** trên web (OV7670, QVGA 320×240, chưa qua xử lý):
+
+| | |
+|---|---|
+| ![Bàn có hộp giấy, chi tiết in 3D và điện thoại](assets/camera_desk_parts.jpg) | ![Bàn có sổ tay, giấy tờ, thước tam giác](assets/camera_desk_notebook.jpg) |
+| *Mặt bàn: hộp giấy, chi tiết in 3D, điện thoại ở mép dưới* | *Mặt bàn: sổ tay, giấy tờ, thước tam giác, gói đồ màu đỏ* |
+| ![Điện thoại đặt trên bàn](assets/camera_phone.jpg) | ![Sàn gạch hoa văn](assets/camera_floor_tiles.jpg) |
+| *Điện thoại trên bàn (class `phone`), góc chụp nghiêng* | *Sàn gạch hoa văn và chân ghế, không có đối tượng nào* |
+
+Ảnh OV7670 bị ám màu, nhiễu và chụp ở góc khác hẳn ảnh dataset, nên dùng camera để detect có thể kém hơn nhiều so với
+chạy trên ảnh test. Các đội muốn dùng camera nên cân nhắc thu thêm dữ liệu từ chính camera này.
+
 - Đổi chân: sửa `CAM_PIN_*` trong `main/cam.c`. XCLK, CLKRC, chất lượng JPEG: chỉnh trong `menuconfig`.
 - Không có camera thì firmware vẫn chạy bình thường, web báo "Không có camera".
 - Lúc khởi động có nhiều dòng `I2C transaction unexpected nack`: đó là driver dò các loại cảm biến khác, **không phải lỗi**.
@@ -140,7 +168,7 @@ gcc -I main test/test_logic.c main/logic.c -lm -o /tmp/t && /tmp/t
 | `AllocateTensors loi` + `Didn't find op ...` | Thêm op vào `REGISTER_OPS` (`main/model_config.h`) |
 | `khong cap phat duoc ... KB PSRAM` | Board không có PSRAM hoặc PSRAM Quad (xem [Phần cứng](#phần-cứng)) |
 | `detection: can input int8 1x240x320x3 ...` | Model detection sai shape hoặc sai số class |
-| `Thieu main/models/... ` khi build | Chưa copy đủ 6 file `.cc/.h` vào `main/models/` |
+| `Thieu main/models/... ` khi build | Chưa copy đủ các file `.cc/.h` vào `main/models/` |
 
 ## License
 
